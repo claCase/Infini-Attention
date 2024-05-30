@@ -71,11 +71,8 @@ class AttentionRNNCell(
         # Retrive context from memory
         q_elu = tf.nn.elu(q) + 1.0
         A_mem_0 = tf.einsum("bhdo,bnhd->bnho", mem, q_elu)
-        #print(f"A_mem_0 {A_mem_0}")
         A_mem_1 = tf.einsum("bhd,bnhd->bnh", z, q_elu)
-        #print(f"A_mem_1: {A_mem_1}")
         A_mem = A_mem_0 / (A_mem_1[..., None] + 1e-8)
-        #print(f"A_mem: {A_mem}")
 
         # Update Memory
         k_elu = tf.nn.elu(k) + 1.0
@@ -93,7 +90,7 @@ class AttentionRNNCell(
         qk_normed = qk / d
         if self.causal:
             mask = tf.ones_like(qk_normed)
-            mask = -(1. - tf.linalg.LinearOperatorLowerTriangular(mask))*1e10
+            mask = -(1. - tf.linalg.LinearOperatorLowerTriangular(mask).to_dense())*1e10
             qk_normed = qk_normed + mask 
         A_soft = tf.nn.softmax(qk_normed)
         A_dot = tf.einsum("bhnk,bkho->bnho", A_soft, v)
