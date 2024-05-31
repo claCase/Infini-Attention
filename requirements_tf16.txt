@@ -1,0 +1,7 @@
+tensorflow[and-cuda]==2.16.1
+tensorflow-probability==0.24.0
+tf-models-official==2.15.0
+numpy
+pandas 
+matplotlib 
+keras-nlp

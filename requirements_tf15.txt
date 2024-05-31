@@ -1,0 +1,8 @@
+tensorflow[and-cuda]==2.15.0
+tensorflow-probability==0.23
+tf-models-official==2.15.0
+regex
+keras-nlp --no-deps
+numpy
+pandas 
+matplotlib 
