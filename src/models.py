@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import models
 import numpy as np
-import pandas as pd
+#import pandas as pd
 from tensorflow_probability.python.distributions import (
     RelaxedOneHotCategorical,
     OneHotCategorical,
@@ -24,6 +24,8 @@ class InfiniAttentionModel(models.Model):
         initializer="glorot_uniform",
         return_state=False,
         return_sequences=True,
+        activation="tanh",
+        positional_encoding=True,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -34,11 +36,14 @@ class InfiniAttentionModel(models.Model):
             delta_rule=delta_rule,
             dropout=dropout,
             initializer=initializer,
+            positional_encoding=positional_encoding,
         )
         self.rnn = tfkl.RNN(
             cell, return_state=return_state, return_sequences=return_sequences
         )
+        self.embedding = tfkl.Dense(dims*2, activation)
     
     def call(self, inputs, training):
+        inputs = self.embedding(inputs)
         return self.rnn(inputs, training=training)
     

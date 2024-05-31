@@ -1,16 +1,17 @@
+from packaging.version import Version
 import tensorflow as tf
-from tensorflow.keras import layers, models, activations
-from tensorflow.python.keras.layers.recurrent import (
-    DropoutRNNCellMixin,
-    _config_for_enable_caching_device,
-    _caching_device,
-)
+from keras import layers, models, activations
+if Version(tf.__version__) >= Version("2.16.0"):
+    from keras.src.layers.rnn.dropout_rnn_cell import DropoutRNNCell as DropCell
+    from keras_nlp.api.layers import SinePositionEncoding
+else:
+    from keras_nlp.layers import SinePositionEncoding
+    from tensorflow.python.keras.layers.recurrent import DropoutRNNCellMixin as DropCell
 import numpy as np
 
-
 class AttentionRNNCell(
-    DropoutRNNCellMixin, 
-    tf.keras.__internal__.layers.BaseRandomLayer
+    tf.keras.layers.Layer,
+    DropCell, 
 ):
     def __init__(
         self,
@@ -21,6 +22,7 @@ class AttentionRNNCell(
         dropout=0,
         initializer="glorot_uniform",
         causal=True,
+        positional_encoding=True,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -35,7 +37,10 @@ class AttentionRNNCell(
         self.delta_rule = delta_rule
         self.dropout = dropout
         self.causal = causal 
-
+        if positional_encoding:
+            self.positional = SinePositionEncoding(max_wavelength=1000, dtype=tf.float32)
+        else:
+            self.positional = None 
     def build(self, input_shape):
         i = input_shape[-1]
         self.attn_kernel = self.add_weight(
@@ -57,6 +62,8 @@ class AttentionRNNCell(
         Returns:
             _type_: _description_
         """
+        if self.positional is not None:
+            inputs = inputs + tf.cast(self.positional(inputs), inputs.dtype)
         mem, z = states
         kvq = tf.einsum("bni,ihok->bnhok", inputs, self.attn_kernel)
         if self.dropout > 0:
